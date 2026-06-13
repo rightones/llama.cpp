@@ -62,6 +62,8 @@ list(APPEND GGML_HEADERS_ROCM "../../include/ggml-cuda.h")
 
 file(GLOB   GGML_SOURCES_ROCM "../ggml-cuda/*.cu")
 file(GLOB   SRCS "../ggml-cuda/template-instances/fattn-tile*.cu")
+# Exclude D>=576 tile kernels: exceed HIP local memory limit (67584 > 65536)
+list(FILTER SRCS EXCLUDE REGEX "dkq(576|640)")
 list(APPEND GGML_SOURCES_ROCM ${SRCS})
 file(GLOB   SRCS "../ggml-cuda/template-instances/fattn-mma*.cu")
 list(APPEND GGML_SOURCES_ROCM ${SRCS})
@@ -116,6 +118,9 @@ endif()
 
 if (GGML_HIP_ROCWMMA_FATTN)
     add_compile_definitions(GGML_HIP_ROCWMMA_FATTN)
+    if (GPU_TARGETS MATCHES "gfx103")
+        message(WARNING "GGML_HIP_ROCWMMA_FATTN=ON has no effect on gfx1030 (RDNA2) — no hardware matrix cores")
+    endif()
 endif()
 
 if (NOT GGML_HIP_MMQ_MFMA)
